@@ -1,0 +1,70 @@
+export ZPLUG_HOME=/usr/local/opt/zplug
+source $ZPLUG_HOME/init.zsh
+
+if [ -f "${HOME}/.gpg-agent-info" ]; then
+     . "${HOME}/.gpg-agent-info"
+       export GPG_AGENT_INFO
+       export SSH_AUTH_SOCK
+       export SSH_AGENT_PID
+fi
+
+
+#Zplug
+
+zplug "zsh-users/zsh-history-substring-search"
+zplug "Jxck/dotfiles", as:command, use:"bin/{histuniq,color}"
+zplug "plugins/git",   from:oh-my-zsh
+zplug "lib/clipboard", from:oh-my-zsh, if:"[[ $OSTYPE == *darwin* ]]"
+zplug "b4b4r07/enhancd", at:v1
+zplug 'dracula/zsh', as:theme
+zplug 'zplug/zplug', hook-build:'zplug --self-manage'
+zplug "plugins/osx", from:oh-my-zsh
+zplug denysdovhan/spaceship-prompt, use:spaceship.zsh, from:github, as:theme
+zplug "plugins/docker", from:oh-my-zsh, if:'[[ $commands[docker] ]]'
+zplug "plugins/docker-compose", from:oh-my-zsh, if:'[[ $commands[docker-compose] ]]'
+
+zplug "tysonwolker/iterm-tab-colors"
+zplug "arzzen/calc.plugin.zsh"
+if ! zplug check --verbose; then
+    printf "Install? [y/N]: "
+    if read -q; then
+        echo; zplug install
+    fi
+fi
+
+# Set Spaceship ZSH as a prompt
+zplug load
+SPACESHIP_HOST_SHOW=(always)
+SPACESHIP_USER_SHOW=(always)
+SPACESHIP_PROMPT_ADD_NEWLINE=(true)
+SPACESHIP_PROMPT_SEPARATE_LINE=(true)
+SPACESHIP_PROMPT_FIRST_PREFIX_SHOW=(true)
+SPACESHIP_TIME_SHOW=(true)
+SPACESHIP_TIME_12HR=(true)
+SPACESHIP_PROMPT_ORDER=( dir git aws pyenv terraform vi_mode char )
+SPACESHIP_RPROMPT_ORDER=(time host)
+DOCKER_THEME_PROMPT="%{$fg_bold[blue]%}Docker%{$reset_color%}"
+DOCKER_LOCAL_COLOR="green"
+DOCKER_REMOTE_COLOR="red"
+source <(oc completion zsh)
+function awsls () { aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId,State.Name,InstanceType,PrivateIpAddress,PublicIpAddress,Tags[?Key==`Name`].Value[]]' --output json | tr -d '\n[] "' | perl -pe 's/i-/\ni-/g' | tr ',' '\t' | sed -e 's/null/None/g' | grep '^i-' | column -t }
+function aws_status () {aws ec2 describe-instance-status --filters Name=instance-status.status,Values=impaired}
+function aws_instance_status () {aws ec2 describe-instance-status --instance-id "$@"}
+histsearch() { fc -lim "*$@*" 1 }
+alias history='history 0'
+function mkcd() { mkdir -p "$@" && cd "$_"; }
+function f() { find . -iname "*$1*" ${@:2} }
+function r() { grep "$1" ${@:2} -R . }
+alias ls='ls -G'
+alias ll='ls -laG'
+alias mtr='sudo /usr/local/Cellar/mtr/0.93_1/sbin/mtr'
+myip="$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'"' '{ print $2}')"
+alias mip='echo "My WAN/Public IP address: ${myip}"'
+alias awslogin='export AWS_PROFILE=vineti && saml2aws login'
+SYSTEM_VERSION_COMPAT=1
+export PATH="/usr/local/sbin:$PATH"
+export PATH="/usr/local/opt/tcl-tk/bin:$PATH"
+export PATH="/usr/local/opt/ruby@2.5/bin:$PATH"
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
+export PATH="/usr/local/opt/python@3.9/bin:$PATH"
